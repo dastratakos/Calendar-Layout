@@ -36,7 +36,40 @@ window.EventGenerator = class EventGenerator {
       "Dragon's Peak",
       "Frost Garden",
       "Mystic Mesa",
-      "Starlight Sanctuary"
+      "Starlight Sanctuary",
+    ];
+
+    this.titles = [
+      "Annual Intergalactic Tea Party and Time Travel Symposium",
+      "Quantum Computing Workshop: From Theory to Practice",
+      "The Great Dragon's Annual Fire Safety Training",
+      "Mystic Arts and Advanced Spellcasting Techniques",
+      "Underwater City Maintenance and Mermaid Meetup",
+      "Space Station Orientation for New Interstellar Travelers",
+      "Crystal Formation and Magical Properties Seminar",
+      "Time Portal Safety and Maintenance Certification",
+      "Advanced Potion Making and Experimental Brewing",
+      "Celestial Navigation and Star Chart Reading",
+      "Dragon Training and Care Workshop",
+      "Magical Creature Handling and Care Certification",
+      "Advanced Spell Weaving and Enchantment Techniques",
+      "Interdimensional Communication Protocol Training",
+      "Magical Artifact Authentication and Preservation",
+      "Cosmic Energy Manipulation and Control",
+      "Advanced Time Travel Ethics and Best Practices",
+      "Magical Plant Care and Herbology Workshop",
+      "Interstellar Diplomacy and Protocol Training",
+      "Advanced Magical Theory and Practical Applications",
+      "Crystal Energy Channeling and Meditation",
+      "Magical Transportation Safety and Regulations",
+      "Advanced Spell Components and Material Sourcing",
+      "Interdimensional Portal Maintenance and Repair",
+      "Magical Creature Breeding and Conservation",
+      "Advanced Potion Ingredient Harvesting",
+      "Magical Architecture and Structural Integrity",
+      "Time Stream Navigation and Safety Protocols",
+      "Magical Artifact Restoration and Preservation",
+      "Advanced Spell Defense and Countermeasures",
     ];
   }
 
@@ -54,8 +87,9 @@ window.EventGenerator = class EventGenerator {
 
       return {
         id: 0,
-        title: "X",
-        location: this.locations[Math.floor(Math.random() * this.locations.length)],
+        title: this.titles[Math.floor(Math.random() * this.titles.length)],
+        location:
+          this.locations[Math.floor(Math.random() * this.locations.length)],
         start: startDate,
         end: endDate,
       };
@@ -66,10 +100,6 @@ window.EventGenerator = class EventGenerator {
         }
         return b.end.getTime() - a.end.getTime();
       })
-      .map((event, idx) => {
-        event.id = idx + 1;
-        event.title = `Event ${idx + 1}`;
-        return event;
-      });
+      .map((event, idx) => ({ ...event, id: idx + 1 }));
   }
 };

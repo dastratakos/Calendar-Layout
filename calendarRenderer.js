@@ -71,11 +71,17 @@ window.CalendarRenderer = class CalendarRenderer {
         minute: "2-digit",
       });
 
-      div.innerHTML = `
-        <div class="event-title">${ev.title}</div>
-        <div class="event-location">${Icons.location} ${ev.location}</div>
-        <div class="event-time">${Icons.clock} ${startTime} - ${endTime}</div>
-      `;
+      let html = `<div class="event-title">${ev.title}</div>`;
+
+      if (ev.height >= 40) {
+        html += `<div class="event-location">${Icons.location} ${ev.location}</div>`;
+      }
+
+      if (ev.height >= 60) {
+        html += `<div class="event-time">${Icons.clock} ${startTime} - ${endTime}</div>`;
+      }
+
+      div.innerHTML = html;
       this.container.appendChild(div);
     });
   }
