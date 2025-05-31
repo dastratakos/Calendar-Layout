@@ -1,6 +1,6 @@
 window.DayLayout = class DayLayout {
   constructor(config = {}) {
-    this.TOTAL_WIDTH = config.totalWidth || 600;
+    this.DAY_WIDTH = config.totalWidth || 600;
     this.INDENT_WIDTH = config.indentWidth || 10;
     this.THRESHOLD_MINS = config.thresholdMins || 30;
   }
@@ -11,126 +11,118 @@ window.DayLayout = class DayLayout {
     );
   }
 
-  buildRows(events) {
-    let rows = [];
+  distributeEvents(events) {
     let currRow = [];
-    for (const event of events) {
-      if (currRow.length === 0) {
-        currRow.push(event);
-        continue;
-      }
+    let prevRow = null;
+    let rawLeftToEvent = {};
 
+    for (const event of events) {
       if (
-        this.eventsConflict(event, currRow[0]) &&
-        currRow[0].endOffset >= event.startOffset
+        currRow.length === 0 ||
+        (this.eventsConflict(event, currRow[0]) &&
+          currRow[0].endOffset >= event.startOffset)
       ) {
         currRow.push(event);
         continue;
       }
 
-      // start a new row
-      rows.push(currRow);
+      this.distributeRow(currRow, prevRow, rawLeftToEvent);
+
+      prevRow = currRow;
       currRow = [event];
     }
 
+    // handle last row if it exists
     if (currRow.length > 0) {
-      rows.push(currRow);
+      this.distributeRow(currRow, prevRow, rawLeftToEvent);
     }
-
-    return rows;
   }
 
-  distributeHorizontally(rows) {
-    // first row: split events equally across total width
-    if (rows.length > 0 && rows[0].length > 0) {
-      const eventWidth = this.TOTAL_WIDTH / rows[0].length;
-      rows[0].forEach((event, idx) => {
-        event.leftWithoutIndents = idx * eventWidth;
+  distributeRow(currRow, prevRow, rawLeftToEvent) {
+    if (!prevRow) {
+      // for first row, distribute evenly
+      const eventWidth = this.DAY_WIDTH / currRow.length;
+      currRow.forEach((event, idx) => {
+        event.rawLeft = idx * eventWidth;
         event.left = idx * eventWidth;
+        event.rawWidth = eventWidth;
         event.width = eventWidth;
+        rawLeftToEvent[Math.round(event.rawLeft)] = [event];
       });
+      return;
     }
 
-    for (let rowIdx = 1; rowIdx < rows.length; rowIdx++) {
-      const prevRow = rows[rowIdx - 1];
-      const currRow = rows[rowIdx];
+    let prevIdx = 0;
+    let currIdx = 0;
 
-      let prevIdx = 0;
-      let currIdx = 0;
-      let currLeftStart = 0;
-      let currIdxStart = currIdx;
-      let availableWidth = 0;
-      while (currIdx < currRow.length) {
-        // advance prevIdx, keeping track of availableWidth
+    let currLeftStart = 0;
+    let currIdxStart = currIdx;
+    let availableWidth = 0;
+
+    while (currIdx < currRow.length) {
+      // advance prevIdx, keeping track of availableWidth
+      while (
+        prevIdx < prevRow.length &&
+        (!this.eventsConflict(currRow[currIdx], prevRow[prevIdx]) ||
+          prevRow[prevIdx].endOffset < currRow[currIdx].startOffset)
+      ) {
+        availableWidth += prevRow[prevIdx].rawWidth;
+        prevIdx += 1;
+      }
+      if (prevIdx === prevRow.length) {
+        // add remaining width to the right of prevRow[prevIdx]
+        availableWidth +=
+          this.DAY_WIDTH -
+          (prevRow[prevIdx - 1].rawLeft + prevRow[prevIdx - 1].rawWidth);
+        currIdx = currRow.length;
+      } else {
+        // advance currIdx
         while (
-          prevIdx < prevRow.length &&
-          (!this.eventsConflict(currRow[currIdx], prevRow[prevIdx]) ||
-            prevRow[prevIdx].endOffset < currRow[currIdx].startOffset)
+          currIdx < currRow.length &&
+          this.eventsConflict(currRow[currIdx], prevRow[prevIdx])
         ) {
-          availableWidth += prevRow[prevIdx].width;
-          prevIdx += 1;
+          currIdx += 1;
         }
-        if (prevIdx === prevRow.length) {
-          // add remaining width to the right of prevRow[prevIdx]
-          availableWidth +=
-            this.TOTAL_WIDTH -
-            (prevRow[prevIdx - 1].leftWithoutIndents +
-              prevRow[prevIdx - 1].width);
-          currIdx = currRow.length;
+      }
+
+      // distribute events evenly
+      const numEvents = currIdx - currIdxStart;
+      const eventWidth = availableWidth / numEvents;
+
+      for (let i = 0; i < numEvents; i++) {
+        const event = currRow[currIdxStart + i];
+        event.rawLeft = currLeftStart + i * eventWidth;
+        event.rawWidth = eventWidth;
+        event.left = currLeftStart + i * eventWidth;
+        event.width = eventWidth;
+
+        // apply indents
+        const roundedLeft = Math.round(event.rawLeft);
+        if (roundedLeft in rawLeftToEvent) {
+          for (const e of rawLeftToEvent[roundedLeft]) {
+            if (event.startOffset < e.endOffset) {
+              event.left = e.left + this.INDENT_WIDTH;
+            }
+          }
+          event.width -= event.left - event.rawLeft;
+          rawLeftToEvent[roundedLeft].push(event);
         } else {
-          // advance currIdx
-          while (
-            currIdx < currRow.length &&
-            this.eventsConflict(currRow[currIdx], prevRow[prevIdx])
-          ) {
-            currIdx += 1;
-          }
+          rawLeftToEvent[roundedLeft] = [event];
         }
-        // update curr widths
-        const numEvents = currIdx - currIdxStart;
-        const eventWidth = availableWidth / numEvents;
-
-        for (let i = 0; i < numEvents; i++) {
-          currRow[currIdxStart + i].leftWithoutIndents =
-            currLeftStart + i * eventWidth;
-          currRow[currIdxStart + i].width = eventWidth;
-        }
-
-        // reset for next iteration
-        currLeftStart += availableWidth;
-        currIdxStart = currIdx;
-        availableWidth = 0;
       }
-    }
-  }
 
-  addIndents(rows) {
-    let leftToEvent = {};
-    for (const row of rows) {
-      for (const event of row) {
-        const roundedLeft = Math.round(event.leftWithoutIndents);
-        event.left = event.leftWithoutIndents;
-        if (!(roundedLeft in leftToEvent)) {
-          leftToEvent[roundedLeft] = [event];
-          continue;
-        }
-
-        for (const e of leftToEvent[roundedLeft]) {
-          if (event.startOffset < e.endOffset) {
-            event.left = e.left + this.INDENT_WIDTH;
-          }
-        }
-        event.width -= event.left - event.leftWithoutIndents;
-        leftToEvent[roundedLeft].push(event);
-      }
+      // reset for next iteration
+      currLeftStart += availableWidth;
+      currIdxStart = currIdx;
+      availableWidth = 0;
     }
   }
 
   layoutEvents(events) {
-    const convertedEvents = events.map(event => ({
+    const convertedEvents = events.map((event) => ({
       ...event,
       startOffset: event.start.getHours() * 60 + event.start.getMinutes(),
-      endOffset: event.end.getHours() * 60 + event.end.getMinutes()
+      endOffset: event.end.getHours() * 60 + event.end.getMinutes(),
     }));
 
     // sort rows
@@ -144,15 +136,13 @@ window.DayLayout = class DayLayout {
       ...event,
       top: event.startOffset,
       height: event.endOffset - event.startOffset,
-      leftWithoutIndents: 0,
+      rawLeft: 0,
       left: 0,
-      width: this.TOTAL_WIDTH,
+      rawWidth: this.DAY_WIDTH,
+      width: this.DAY_WIDTH,
     }));
 
-    const rows = this.buildRows(calendarEvents);
-    this.distributeHorizontally(rows);
-    this.addIndents(rows);
-
+    this.distributeEvents(calendarEvents);
     return calendarEvents;
   }
 };
