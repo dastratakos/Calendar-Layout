@@ -10,6 +10,11 @@
 
 <body>
   <div class="header">
+    <div class="view-controls">
+      <button class="view-toggle" id="viewToggle">
+        <span id="viewText">Week View</span>
+      </button>
+    </div>
     <button class="theme-toggle" id="themeToggle">
       <span class="theme-icon" id="themeIcon">🌙</span>
       <span id="themeText">Dark Mode</span>
@@ -22,6 +27,7 @@
 
   <script src="theme.js"></script>
   <script src="dayLayout.js"></script>
+  <script src="weekLayout.js"></script>
   <script src="calendarRenderer.js"></script>
   <script src="eventGenerator.js"></script>
   <script src="icons.js"></script>
@@ -29,10 +35,9 @@
     new ThemeToggle();
 
     const eventGenerator = new EventGenerator();
-    const events = eventGenerator.generateEvents(50);
+    const events = eventGenerator.generateWeekEvents();
 
-    const calendar = new CalendarRenderer();
-    calendar.render(events);
+    const calendar = new CalendarRenderer(events);
 
     // Update current time line every minute
     setInterval(() => {

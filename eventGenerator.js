@@ -73,27 +73,45 @@ window.EventGenerator = class EventGenerator {
     ];
   }
 
-  generateEvents(count = 50) {
-    return Array.from({ length: count }, (_, i) => {
-      // Generate random start time between 8am and 8pm
-      const startHour = Math.floor(Math.random() * 24);
-      const startMinute = Math.floor(Math.random() * 60);
-      const startDate = new Date(this.baseDate);
-      startDate.setHours(startHour, startMinute, 0, 0);
+  generateEvent(date = this.baseDate) {
+    const startHour = Math.floor(Math.random() * 24);
+    const startMinute = Math.floor(Math.random() * 60);
+    const startDate = new Date(date);
+    startDate.setHours(startHour, startMinute, 0, 0);
 
-      // Generate random duration between 15 and 120 minutes
-      const duration = 15 + Math.floor(Math.random() * 115);
-      const endDate = new Date(startDate.getTime() + duration * 60000);
+    // Generate random duration between 15 and 120 minutes
+    const duration = 15 + Math.floor(Math.random() * 115);
+    const endDate = new Date(startDate.getTime() + duration * 60000);
 
-      return {
-        title: this.titles[Math.floor(Math.random() * this.titles.length)],
-        location:
-          this.locations[Math.floor(Math.random() * this.locations.length)],
-        start: startDate,
-        end: endDate,
-        color: `var(--color-${Math.floor(Math.random() * 10) + 1})`,
-      };
+    return {
+      title: this.titles[Math.floor(Math.random() * this.titles.length)],
+      location:
+        this.locations[Math.floor(Math.random() * this.locations.length)],
+      start: startDate,
+      end: endDate,
+      color: `var(--color-${Math.floor(Math.random() * 10) + 1})`,
+    };
+  }
+
+  generateDayEvents(date = this.baseDate, count = 50) {
+    return Array.from({ length: count }, () => this.generateEvent(date))
+      .sort((a, b) => {
+        if (a.start.getTime() !== b.start.getTime()) {
+          return a.start.getTime() - b.start.getTime();
+        }
+        return b.end.getTime() - a.end.getTime();
+      })
+      .map((event, idx) => ({ ...event, id: idx + 1 }));
+  }
+
+  generateWeekEvents(startDate = this.baseDate, eventsPerDay = 20) {
+    // TODO: const for 7 days
+    return Array.from({ length: 7 }, (_, day) => {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + day);
+      return this.generateDayEvents(currentDate, eventsPerDay);
     })
+      .flat()
       .sort((a, b) => {
         if (a.start.getTime() !== b.start.getTime()) {
           return a.start.getTime() - b.start.getTime();

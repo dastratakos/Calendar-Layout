@@ -1,6 +1,6 @@
 window.DayLayout = class DayLayout {
   constructor(config = {}) {
-    this.DAY_WIDTH = config.totalWidth || 600;
+    this.DAY_WIDTH = config.dayWidth || 600;
     this.INDENT_WIDTH = config.indentWidth || 10;
     this.THRESHOLD_MINS = config.thresholdMins || 30;
   }

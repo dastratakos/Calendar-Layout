@@ -1,10 +1,15 @@
 window.CalendarRenderer = class CalendarRenderer {
-  constructor(config = {}) {
+  constructor(events, config = {}) {
+    this.events = events;
     this.container = document.getElementById(config.containerId || "calendar");
     this.timeLabelsContainer = document.getElementById(
       config.timeLabelsId || "time-labels"
     );
     this.dayLayout = new DayLayout(config);
+    this.weekLayout = new WeekLayout(config);
+    this.viewMode = this.getStoredViewMode() || "day";
+    this.viewToggle = document.getElementById("viewToggle");
+    this.viewText = document.getElementById("viewText");
 
     // Calendar dimensions
     this.calendarWidth = config.calendarWidth || 600;
@@ -17,6 +22,34 @@ window.CalendarRenderer = class CalendarRenderer {
     this.container.style.height = `${this.calendarHeight}px`;
     this.timeLabelsContainer.style.width = `${this.timeLabelWidth}px`;
     this.timeLabelsContainer.style.height = `${this.calendarHeight}px`;
+
+    this.init();
+  }
+
+  init() {
+    this.viewText.textContent =
+      this.viewMode === "day" ? "Day View" : "Week View";
+    this.render(this.events);
+
+    this.viewToggle.addEventListener("click", () => {
+      this.setViewMode(this.viewMode === "day" ? "week" : "day");
+      this.viewText.textContent =
+        this.viewMode === "day" ? "Day View" : "Week View";
+      this.render(this.events);
+    });
+  }
+
+  setViewMode(mode) {
+    this.viewMode = mode;
+    this.storeViewMode(mode);
+  }
+
+  storeViewMode(mode) {
+    localStorage.setItem("viewMode", mode);
+  }
+
+  getStoredViewMode() {
+    return localStorage.getItem("viewMode");
   }
 
   renderTimeLabels() {
@@ -85,7 +118,10 @@ window.CalendarRenderer = class CalendarRenderer {
   }
 
   renderEvents(events) {
-    const layout = this.dayLayout.layoutEvents(events);
+    const layout =
+      this.viewMode === "day"
+        ? this.dayLayout.layoutEvents(events)
+        : this.weekLayout.layoutEvents(events);
 
     layout.forEach((ev) => {
       const div = document.createElement("div");
