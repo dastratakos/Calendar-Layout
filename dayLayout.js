@@ -6,7 +6,9 @@ window.DayLayout = class DayLayout {
   }
 
   eventsConflict(event1, event2) {
-    return Math.abs(event1.start - event2.start) < this.THRESHOLD_MINS;
+    return (
+      Math.abs(event1.startOffset - event2.startOffset) < this.THRESHOLD_MINS
+    );
   }
 
   buildRows(events) {
@@ -20,7 +22,7 @@ window.DayLayout = class DayLayout {
 
       if (
         this.eventsConflict(event, currRow[0]) &&
-        currRow[0].end >= event.start
+        currRow[0].endOffset >= event.startOffset
       ) {
         currRow.push(event);
         continue;
@@ -63,7 +65,7 @@ window.DayLayout = class DayLayout {
         while (
           prevIdx < prevRow.length &&
           (!this.eventsConflict(currRow[currIdx], prevRow[prevIdx]) ||
-            prevRow[prevIdx].end < currRow[currIdx].start)
+            prevRow[prevIdx].endOffset < currRow[currIdx].startOffset)
         ) {
           availableWidth += prevRow[prevIdx].width;
           prevIdx += 1;
@@ -114,7 +116,7 @@ window.DayLayout = class DayLayout {
         }
 
         for (const e of leftToEvent[roundedLeft]) {
-          if (event.start < e.end) {
+          if (event.startOffset < e.endOffset) {
             event.left = e.left + this.INDENT_WIDTH;
           }
         }
@@ -127,15 +129,15 @@ window.DayLayout = class DayLayout {
   layoutEvents(events) {
     // sort rows
     const sorted = events.slice().sort((a, b) => {
-      if (a.start !== b.start) return a.start - b.start;
-      return b.end - a.end;
+      if (a.startOffset !== b.startOffset) return a.startOffset - b.startOffset;
+      return b.endOffset - a.endOffset;
     });
 
     // add fields for computing geometry
     const calendarEvents = sorted.map((event) => ({
       ...event,
-      top: event.start,
-      height: event.end - event.start,
+      top: event.startOffset,
+      height: event.endOffset - event.startOffset,
       leftWithoutIndents: 0,
       left: 0,
       width: this.TOTAL_WIDTH,

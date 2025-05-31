@@ -44,7 +44,14 @@ window.CalendarRenderer = class CalendarRenderer {
   }
 
   renderEvents(events) {
-    const layout = this.dayLayout.layoutEvents(events);
+    // Convert Date objects to minute offsets for layout
+    const eventsWithOffsets = events.map((event) => ({
+      ...event,
+      startOffset: event.start.getHours() * 60 + event.start.getMinutes(),
+      endOffset: event.end.getHours() * 60 + event.end.getMinutes(),
+    }));
+
+    const layout = this.dayLayout.layoutEvents(eventsWithOffsets);
 
     layout.forEach((ev) => {
       const div = document.createElement("div");
@@ -54,9 +61,20 @@ window.CalendarRenderer = class CalendarRenderer {
       div.style.left = `${ev.left}px`;
       div.style.width = `${ev.width}px`;
       div.style.backgroundColor = this.getRandomColor();
+
+      const startTime = ev.start.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const endTime = ev.end.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
       div.innerHTML = `
         <div class="event-title">${ev.title}</div>
-        <div class="event-location">${ev.location}</div>
+        <div class="event-location">${Icons.location} ${ev.location}</div>
+        <div class="event-time">${Icons.clock} ${startTime} - ${endTime}</div>
       `;
       this.container.appendChild(div);
     });

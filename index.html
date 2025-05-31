@@ -23,33 +23,14 @@
   <script src="theme.js"></script>
   <script src="dayLayout.js"></script>
   <script src="calendarRenderer.js"></script>
+  <script src="eventGenerator.js"></script>
+  <script src="icons.js"></script>
   <script>
-    // Initialize theme toggle when DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      new ThemeToggle();
-    });
+    new ThemeToggle();
 
-    // Generate sample events
-    const events = Array.from({ length: 50 }, (_, i) => {
-      const start = Math.floor(Math.random() * (1440 - 60));
-      const end = start + Math.floor(30 + Math.random() * 90);
-      return {
-        id: 0,
-        title: "X",
-        location: `Room ${String.fromCharCode(65 + (i % 26))}`,
-        start,
-        end: Math.min(end, 1440)
-      };
-    }).sort((a, b) => {
-      if (a.start !== b.start) return a.start - b.start;
-      return b.end - a.end;
-    }).map((event, idx) => {
-      event.id = idx + 1;
-      event.title = `Event ${idx + 1}`;
-      return event;
-    });
+    const eventGenerator = new EventGenerator();
+    const events = eventGenerator.generateEvents(50);
 
-    // Initialize calendar
     const calendar = new CalendarRenderer();
     calendar.render(events);
 

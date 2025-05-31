@@ -157,10 +157,35 @@ body {
   color: var(--text-color);
 }
 
+.event-time {
+  font-size: 10px;
+  color: var(--text-color);
+  opacity: 0.9;
+  margin: 2px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.event-time svg {
+  opacity: 0.8;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 .event-location {
   font-size: 10px;
   color: var(--text-color);
   opacity: 0.8;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.event-location svg {
+  opacity: 0.8;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* Current Time Indicator */
