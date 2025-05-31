@@ -86,12 +86,12 @@ window.EventGenerator = class EventGenerator {
       const endDate = new Date(startDate.getTime() + duration * 60000);
 
       return {
-        id: 0,
         title: this.titles[Math.floor(Math.random() * this.titles.length)],
         location:
           this.locations[Math.floor(Math.random() * this.locations.length)],
         start: startDate,
         end: endDate,
+        color: `var(--color-${Math.floor(Math.random() * 10) + 1})`,
       };
     })
       .sort((a, b) => {

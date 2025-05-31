@@ -94,7 +94,7 @@ window.CalendarRenderer = class CalendarRenderer {
       div.style.height = `${ev.height}px`;
       div.style.left = `${ev.left}px`;
       div.style.width = `${ev.width}px`;
-      div.style.backgroundColor = this.getRandomColor();
+      div.style.backgroundColor = ev.color;
 
       const startTime = ev.start.toLocaleTimeString([], {
         hour: "2-digit",
@@ -118,11 +118,6 @@ window.CalendarRenderer = class CalendarRenderer {
       div.innerHTML = html;
       this.container.appendChild(div);
     });
-  }
-
-  getRandomColor() {
-    const colorNumber = Math.floor(Math.random() * 10) + 1;
-    return `var(--color-${colorNumber})`;
   }
 
   clear() {
