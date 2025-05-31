@@ -10,6 +10,7 @@ window.CalendarRenderer = class CalendarRenderer {
     this.calendarWidth = config.calendarWidth || 600;
     this.calendarHeight = config.calendarHeight || 1440; // 24 hours * 60 minutes
     this.timeLabelWidth = config.timeLabelWidth || 60;
+    this.timeLabelOverlapThreshold = config.timeLabelOverlapThreshold || 12; // minutes
 
     // Apply dimensions
     this.container.style.width = `${this.calendarWidth}px`;
@@ -26,22 +27,24 @@ window.CalendarRenderer = class CalendarRenderer {
     for (let hour = 0; hour < 24; hour++) {
       const minutes = hour * 60;
       // Skip if this hour's label would overlap with current time
-      if (Math.abs(minutes - currentMinutes) < 12) continue;
+      if (Math.abs(minutes - currentMinutes) < this.timeLabelOverlapThreshold) {
+        continue;
+      }
 
       const label = document.createElement("div");
       label.className = "time-label";
       label.style.top = `${minutes}px`;
-      
+
       // Convert to 12-hour format
-      const period = hour >= 12 ? 'PM' : 'AM';
+      const period = hour >= 12 ? "PM" : "AM";
       const displayHour = hour % 12 || 12; // Convert 0 to 12
       label.innerText = `${displayHour}${period}`;
-      
+
       this.timeLabelsContainer.appendChild(label);
     }
 
     // Add final 12AM label at the bottom if it won't overlap
-    if (Math.abs(24 * 60 - currentMinutes) >= 30) {
+    if (Math.abs(24 * 60 - currentMinutes) >= this.timeLabelOverlapThreshold) {
       const finalLabel = document.createElement("div");
       finalLabel.className = "time-label";
       finalLabel.style.top = `${24 * 60}px`;
@@ -70,11 +73,11 @@ window.CalendarRenderer = class CalendarRenderer {
     const label = document.createElement("div");
     label.className = "current-time-label";
     label.style.top = `${minutes}px`;
-    
+
     // Convert to 12-hour format
-    const period = now.getHours() >= 12 ? 'PM' : 'AM';
+    const period = now.getHours() >= 12 ? "PM" : "AM";
     const displayHour = now.getHours() % 12 || 12;
-    const displayMinutes = now.getMinutes().toString().padStart(2, '0');
+    const displayMinutes = now.getMinutes().toString().padStart(2, "0");
     label.innerText = `${displayHour}:${displayMinutes}${period}`;
 
     this.container.appendChild(line);
@@ -82,14 +85,7 @@ window.CalendarRenderer = class CalendarRenderer {
   }
 
   renderEvents(events) {
-    // Convert Date objects to minute offsets for layout
-    const eventsWithOffsets = events.map((event) => ({
-      ...event,
-      startOffset: event.start.getHours() * 60 + event.start.getMinutes(),
-      endOffset: event.end.getHours() * 60 + event.end.getMinutes(),
-    }));
-
-    const layout = this.dayLayout.layoutEvents(eventsWithOffsets);
+    const layout = this.dayLayout.layoutEvents(events);
 
     layout.forEach((ev) => {
       const div = document.createElement("div");

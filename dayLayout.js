@@ -127,8 +127,14 @@ window.DayLayout = class DayLayout {
   }
 
   layoutEvents(events) {
+    const convertedEvents = events.map(event => ({
+      ...event,
+      startOffset: event.start.getHours() * 60 + event.start.getMinutes(),
+      endOffset: event.end.getHours() * 60 + event.end.getMinutes()
+    }));
+
     // sort rows
-    const sorted = events.slice().sort((a, b) => {
+    const sorted = convertedEvents.slice().sort((a, b) => {
       if (a.startOffset !== b.startOffset) return a.startOffset - b.startOffset;
       return b.endOffset - a.endOffset;
     });
