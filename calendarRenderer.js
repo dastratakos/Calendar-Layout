@@ -5,15 +5,48 @@ window.CalendarRenderer = class CalendarRenderer {
       config.timeLabelsId || "time-labels"
     );
     this.dayLayout = new DayLayout(config);
+
+    // Calendar dimensions
+    this.calendarWidth = config.calendarWidth || 600;
+    this.calendarHeight = config.calendarHeight || 1440; // 24 hours * 60 minutes
+    this.timeLabelWidth = config.timeLabelWidth || 60;
+
+    // Apply dimensions
+    this.container.style.width = `${this.calendarWidth}px`;
+    this.container.style.height = `${this.calendarHeight}px`;
+    this.timeLabelsContainer.style.width = `${this.timeLabelWidth}px`;
+    this.timeLabelsContainer.style.height = `${this.calendarHeight}px`;
   }
 
   renderTimeLabels() {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // Add labels for each hour
     for (let hour = 0; hour < 24; hour++) {
+      const minutes = hour * 60;
+      // Skip if this hour's label would overlap with current time
+      if (Math.abs(minutes - currentMinutes) < 12) continue;
+
       const label = document.createElement("div");
       label.className = "time-label";
-      label.style.top = `${hour * 60}px`;
-      label.innerText = `${hour.toString().padStart(2, "0")}:00`;
+      label.style.top = `${minutes}px`;
+      
+      // Convert to 12-hour format
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12; // Convert 0 to 12
+      label.innerText = `${displayHour}${period}`;
+      
       this.timeLabelsContainer.appendChild(label);
+    }
+
+    // Add final 12AM label at the bottom if it won't overlap
+    if (Math.abs(24 * 60 - currentMinutes) >= 30) {
+      const finalLabel = document.createElement("div");
+      finalLabel.className = "time-label";
+      finalLabel.style.top = `${24 * 60}px`;
+      finalLabel.innerText = "12AM";
+      this.timeLabelsContainer.appendChild(finalLabel);
     }
   }
 
@@ -37,7 +70,12 @@ window.CalendarRenderer = class CalendarRenderer {
     const label = document.createElement("div");
     label.className = "current-time-label";
     label.style.top = `${minutes}px`;
-    label.innerText = now.toTimeString().substring(0, 5);
+    
+    // Convert to 12-hour format
+    const period = now.getHours() >= 12 ? 'PM' : 'AM';
+    const displayHour = now.getHours() % 12 || 12;
+    const displayMinutes = now.getMinutes().toString().padStart(2, '0');
+    label.innerText = `${displayHour}:${displayMinutes}${period}`;
 
     this.container.appendChild(line);
     this.container.appendChild(label);
